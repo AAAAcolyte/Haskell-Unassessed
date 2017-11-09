@@ -1,11 +1,10 @@
 data Shape = Tri Float Float Float | Squ Float | Cir Float | Poly [Vertex]
-data Tree a = Empty | Node (Tree a) a (Tree a)
-  deriving (Show)
+data NewTree a = NewLeaf a | NewNode (NewTree a) (NewTree a)
+  deriving (Eq,Show)
+data Tree = Leaf | Node Tree Tree
+  deriving (Eq,Show)
 type Vertex = (Float,Float)
 type Date = (Int,Int,Int)
-
-tmpTree = Node (Node (Node Empty 'A' Empty) 'B' (Node (Node Empty 'C' Empty) 'D' (Node Empty 'E' Empty)))
- 'F' (Node Empty 'G' (Node (Node Empty 'H' Empty) 'I' Empty))
 area :: Shape -> Float
 area (Tri a b c) = sqrt(s*(s-a)*(s-b)*(s-c))
   where
@@ -25,20 +24,26 @@ age (y1,m1,d1) (y2,d2,m2)
   | (m1,d1) <= (d2,m2) = y2 - y1
   | otherwise = y2 - y1 - 1
 
-inOrder :: Tree a -> [a]
-inOrder Empty
-  = []
-inOrder (Node t1 x t2)
-  = inOrder t1 ++ (x : inOrder t2)
+makeTrees :: Int -> [Tree]
+makeTrees n
+  | n == 0 = [Leaf]
+  | otherwise = [Node l r | (t, t') <- map makeTrees' [0..n-1],
+  l <- t, r <- t']
+  where
+    makeTrees' k = (makeTrees k, makeTrees (n - k - 1))
 
-preOrder :: Tree a -> [a]
-preOrder Empty
-  = []
-preOrder (Node t1 x t2)
-  = x : (preOrder t1 ++ preOrder t2)
+build :: [a] -> NewTree a
+build [x] = NewLeaf x
+build list = NewNode (build leftPart) (build rightPart)
+    where
+      (leftPart,rightPart) = splitAt midPoint list
+      midPoint = div lOfList 2
+      lOfList = length list
 
-postOrder :: Tree a -> [a]
-postOrder Empty
-  = []
-postOrder (Node t1 x t2)
-  = postOrder t1 ++ postOrder t2 ++ [x]
+ends :: NewTree a -> [a]
+ends (NewLeaf x) = [x]
+ends (NewNode left right) = ends left ++ ends right
+
+swap :: NewTree a -> NewTree a
+swap (NewLeaf x) = NewLeaf x
+swap (NewNode left right) = NewNode (swap right) (swap left)
